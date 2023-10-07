@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException, Form
+from fastapi.responses import JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from starlette.requests import Request
@@ -13,10 +14,19 @@ templates = Jinja2Templates(directory="templates")
 rack_stats = RackStats()
 
 
+@app.get("/get_data/")
+def read_items():
+    timestamps, temperatures, humidities = rack_stats.readRecord()
+    return JSONResponse({
+        "timestamps": timestamps,
+        "temperatures": temperatures,
+        "humidities": humidities
+    })
+
+
 @app.get("/")
-async def read_items(request: Request):
-    items = rack_stats.readRecord()
-    return templates.TemplateResponse("index.html", {"request": request, "items": items})
+async def index(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
 
 
 @app.post("/items/")

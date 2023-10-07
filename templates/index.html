@@ -1,18 +1,62 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Items</title>
-</head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Temperature and Humidity Chart</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@^3"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment@^2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@^1"></script></head>
 <body>
-    <h2>Items</h2>
-    <form action="/items/" method="post">
-        <input type="text" name="name" placeholder="Enter item name">
-        <input type="submit" value="Add">
-    </form>
-    <ul>
-    {% for item in items %}
-        <li>{{ item.temperature }} {{ item.humidity }}</li>
-    {% endfor %}
-    </ul>
+
+<canvas id="myChart" width="400" height="200"></canvas>
+<script>
+    // 데이터 가져오기
+    fetch("/get_data/")
+        .then(response => response.json())
+        .then(data => {
+            // 데이터를 차트에 그리기
+            var ctx = document.getElementById('myChart').getContext('2d');
+            var myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.timestamps,
+                    datasets: [{
+                        label: 'Temperature',
+                        data: data.temperatures,
+                        borderColor: 'blue',
+                        fill: false
+                    },
+                    {
+                        label: 'Humidity',
+                        data: data.humidities,
+                        borderColor: 'red',
+                        fill: false
+                    }]
+                },
+                options: {
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                parser: 'YYYY-MM-DD HH:mm:ss',
+                                unit: 'minute',
+                                stepSize: 5,
+                                displayFormats: {
+                                    minute: 'HH:mm'
+                                },
+                                tooltipFormat: 'll HH:mm'
+                            },
+                            ticks: {
+                                autoSkip: true,
+                                maxTicksLimit: 20
+                            }
+                        }
+                    }
+                }
+            });
+        });
+</script>
+
 </body>
 </html>
