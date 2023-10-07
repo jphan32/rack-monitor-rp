@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Items</title>
+</head>
+<body>
+    <h2>Items</h2>
+    <form action="/items/" method="post">
+        <input type="text" name="name" placeholder="Enter item name">
+        <input type="submit" value="Add">
+    </form>
+    <ul>
+    {% for item in items %}
+        <li>{{ item.temperature }} {{ item.humidity }}</li>
+    {% endfor %}
+    </ul>
+</body>
+</html>
