@@ -1,5 +1,6 @@
-# Database
+# Database and config
 rack_data.db
+config.py
 
 # Poetry
 poetry.lock
