@@ -1,3 +1,5 @@
+import uvicorn
+
 from fastapi import FastAPI, Depends, HTTPException, Form
 from fastapi.responses import JSONResponse
 from fastapi.templating import Jinja2Templates
@@ -35,5 +37,4 @@ async def create_item(request: Request, name: str = Form(...)):
     return item
 
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8000, log_level='debug', access_log=True)

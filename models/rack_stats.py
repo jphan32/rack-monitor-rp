@@ -1,5 +1,5 @@
-from peewee import Model, SqliteDatabase, FloatField, DateTimeField
-from datetime import datetime
+from peewee import Model, SqliteDatabase, FloatField, DateTimeField, fn
+from datetime import datetime, timedelta
 
 # SQLite database
 _db = SqliteDatabase('rack_data.db')
@@ -23,8 +23,16 @@ class RackStats:
         return {"temperature": new_entry.temperature, "humidity": new_entry.humidity}
     
     def readRecord(self):
-        records = RackStatsModel.select()
+        one_week_ago = datetime.now() - timedelta(days=7)
 
-        return ([record.timestamp.strftime('%Y-%m-%d %h:%M:%S') for record in records],
+        records = RackStatsModel.select(
+            RackStatsModel.timestamp,
+            fn.ROUND(RackStatsModel.temperature, 2).alias('temperature'),
+            fn.ROUND(RackStatsModel.humidity, 2).alias('humidity')
+        ).where(
+            RackStatsModel.timestamp >= one_week_ago
+        )
+
+        return ([record.timestamp.strftime('%Y-%m-%d %H:%M:%S') for record in records],
                 [record.temperature for record in records],
                 [record.humidity for record in records])
