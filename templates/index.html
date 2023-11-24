@@ -5,7 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="60">
 
-    <title></title>
+    <title>Rack Manager</title>
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="apple-touch-icon" href="/favicon.png">
 
     <script src="/scripts/chart.js"></script>
     <script src="/scripts/moment.js"></script>
@@ -17,8 +19,8 @@
 <body>
 
 <div class="container">
-    <h1 class="text-center mt-4">Temperature and Humidity Chart</h1>
-    <canvas id="myChart" width="400" height="100"></canvas>
+    <h2 class="text-center mt-4">Temperature and Humidity Chart</h1>
+    <canvas id="myChart" width="400" height="150"></canvas>
     <script>
         // 데이터 가져오기
         fetch("/get_data/")
@@ -39,7 +41,7 @@
                         {
                             label: 'Humidity',
                             data: data.humidities,
-                            borderColor: 'red',
+                            borderColor: 'green',
                             fill: false
                         }]
                     },
@@ -69,10 +71,10 @@
 </div>
 
 <div class="container">
-    <h1 class="text-center mt-4">PC Status Dashboard</h1>
+    <h2 class="text-center mt-4">PC Status Dashboard</h1>
     <div class="row">
         {% for pc in pclist %}
-        <div class="col-md-4 mt-4" id="pc1">
+        <div class="col-md-6 mt-5" id="{{ pc.id }}">
             <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">{{ pc.name }}</h5>
