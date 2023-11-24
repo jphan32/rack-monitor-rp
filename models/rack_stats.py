@@ -7,7 +7,7 @@ _db = SqliteDatabase('rack_data.db')
 class RackStatsModel(Model):
     temperature = FloatField()
     humidity = FloatField()
-    timestamp = DateTimeField(default=datetime.now)
+    timestamp = DateTimeField(default=datetime.now, index=True)
 
     class Meta:
         database = _db
@@ -31,6 +31,8 @@ class RackStats:
             fn.ROUND(RackStatsModel.humidity, 2).alias('humidity')
         ).where(
             RackStatsModel.timestamp >= one_week_ago
+        ).order_by(
+            RackStatsModel.timestamp
         )
 
         return ([record.timestamp.strftime('%Y-%m-%d %H:%M:%S') for record in records],

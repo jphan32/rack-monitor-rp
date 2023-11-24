@@ -5,61 +5,103 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="60">
 
-    <title>Temperature and Humidity Chart</title>
+    <title></title>
+
     <script src="/scripts/chart.js"></script>
     <script src="/scripts/moment.js"></script>
     <script src="/scripts/chartjs-adapter-moment.js"></script>
+
+    <script src="/scripts/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4"></script>
+    <link href="/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65">
 </head>
 <body>
 
-<canvas id="myChart" width="400" height="200"></canvas>
-<script>
-    // 데이터 가져오기
-    fetch("/get_data/")
-        .then(response => response.json())
-        .then(data => {
-            // 데이터를 차트에 그리기
-            var ctx = document.getElementById('myChart').getContext('2d');
-            var myChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: data.timestamps,
-                    datasets: [{
-                        label: 'Temperature',
-                        data: data.temperatures,
-                        borderColor: 'blue',
-                        fill: false
+<div class="container">
+    <h1 class="text-center mt-4">Temperature and Humidity Chart</h1>
+    <canvas id="myChart" width="400" height="100"></canvas>
+    <script>
+        // 데이터 가져오기
+        fetch("/get_data/")
+            .then(response => response.json())
+            .then(data => {
+                // 데이터를 차트에 그리기
+                var ctx = document.getElementById('myChart').getContext('2d');
+                var myChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.timestamps,
+                        datasets: [{
+                            label: 'Temperature',
+                            data: data.temperatures,
+                            borderColor: 'blue',
+                            fill: false
+                        },
+                        {
+                            label: 'Humidity',
+                            data: data.humidities,
+                            borderColor: 'red',
+                            fill: false
+                        }]
                     },
-                    {
-                        label: 'Humidity',
-                        data: data.humidities,
-                        borderColor: 'red',
-                        fill: false
-                    }]
-                },
-                options: {
-                    scales: {
-                        x: {
-                            type: 'time',
-                            time: {
-                                parser: 'YYYY-MM-DD HH:mm:ss',
-                                unit: 'minute',
-                                stepSize: 5,
-                                displayFormats: {
-                                    minute: 'HH:mm'
+                    options: {
+                        scales: {
+                            x: {
+                                type: 'time',
+                                time: {
+                                    parser: 'YYYY-MM-DD HH:mm:ss',
+                                    unit: 'minute',
+                                    stepSize: 5,
+                                    displayFormats: {
+                                        minute: 'HH:mm'
+                                    },
+                                    tooltipFormat: 'll HH:mm'
                                 },
-                                tooltipFormat: 'll HH:mm'
-                            },
-                            ticks: {
-                                autoSkip: true,
-                                maxTicksLimit: 20
+                                ticks: {
+                                    autoSkip: true,
+                                    maxTicksLimit: 20
+                                }
                             }
                         }
                     }
-                }
+                });
             });
-        });
-</script>
-test
+    </script>
+</div>
+
+<div class="container">
+    <h1 class="text-center mt-4">PC Status Dashboard</h1>
+    <div class="row">
+        {% for pc in pclist %}
+        <div class="col-md-4 mt-4" id="pc1">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ pc.name }}</h5>
+                    <p class="card-text status">Status: <span class="{{ 'text-success' if pc.status == True else 'text-danger' }}">{{ 'On' if pc.status == True else 'Off' }}</span></p>
+                    <button class="btn btn-primary power-btn" id="power-btn-{{ pc.id }}" onclick="sendPowerOnRequest({{ pc.id }}, this)" {{ 'disabled' if pc.status == True or pc.can_wol == False }}>Power On</button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <script>
+        function sendPowerOnRequest(pcIdStr, btnElement) {
+            btnElement.disabled = true;
+            var pcId = parseInt(pcIdStr);
+
+            fetch(`/power-on?pcId=${pcId}`, { method: 'GET' })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Success:', data);
+                    btnElement.disabled = false;
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                    btnElement.disabled = false;
+                });
+        }
+    </script>
+</div>
+
 </body>
 </html>

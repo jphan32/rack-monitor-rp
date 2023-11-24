@@ -1,3 +1,7 @@
+import subprocess
+import platform
+import socket
+import struct
 import uvicorn
 
 from fastapi import FastAPI, Depends, HTTPException, Form
@@ -7,6 +11,7 @@ from fastapi.staticfiles import StaticFiles
 from starlette.requests import Request
 
 from models import RackStats
+from config import pclist
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -26,15 +31,53 @@ def read_items():
     })
 
 
+@app.get("/power-on")
+async def power_on(pcId: int):
+    payload = address2packet(pclist[pcId]['mac_addr'])
+    if payload:
+        packet_broadcasting(payload)
+    return {"message": f"Power on request received for PC ID: {pcId}"}
+
+
 @app.get("/")
 async def index(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    for idx, pc in enumerate(pclist):
+        pclist[idx]['id'] = idx
+        pclist[idx]['status'] = is_host_up(pc['ip'])
+
+    return templates.TemplateResponse("index.html", {"request": request, "pclist": pclist})
 
 
-@app.post("/items/")
-async def create_item(request: Request, name: str = Form(...)):
-    item = rack_stats.addRecord(34.5, 67.4)
-    return item
+def is_host_up(ip):
+    param = '-n' if platform.system().lower()=='windows' else '-c'
+    command = ['ping', param, '1', ip]
+    response = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    return response.returncode == 0
+
+
+def address2packet(address):
+    if len(address) == 17:
+        separate = address[2]
+        address = address.replace(separate, "")
+    elif len(address) == 12:
+        pass
+    else:
+        return False
+
+    try:
+        bytes_mac = bytes.fromhex("F" * 12 + address *16)
+        return bytes_mac
+    except ValueError:
+        return False
+
+
+def packet_broadcasting(payload, broadcast_range='255.255.255.255', broadcast_protocol=9):
+    broadcast_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    broadcast_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST,1)
+    ret = broadcast_socket.sendto(payload, (broadcast_range, broadcast_protocol))
+    print(f'sent [{ret}]byte')
+    broadcast_socket.close()
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000, log_level='debug', access_log=True)
