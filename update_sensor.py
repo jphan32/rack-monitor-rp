@@ -11,7 +11,7 @@ rack_stats = RackStats()
 def get_sensors():
     sensor = Adafruit_DHT.DHT22
     pin = 4
-    loop = 30
+    loop = 20
     
     avg_humidity, avg_temperature = np.array([]), np.array([])
     for _ in range(loop):
@@ -20,7 +20,7 @@ def get_sensors():
             avg_humidity = np.append(avg_humidity, humidity)
             avg_temperature = np.append(avg_temperature, temperature)
             #print('Temp={0:0.1f}°C  Humidity={1:0.1f}%'.format(humidity, temperature))
-        time.sleep(1)
+        time.sleep(0.5)
     
     if avg_humidity.size == 0 or avg_temperature.size == 0:
         raise Exception('Failure to get sensor data')
