@@ -1,7 +1,5 @@
 import subprocess
-import platform
 import socket
-import struct
 import uvicorn
 
 from fastapi import FastAPI, Depends, HTTPException, Form
@@ -27,7 +25,9 @@ def read_items():
     return JSONResponse({
         "timestamps": timestamps,
         "temperatures": temperatures,
-        "humidities": humidities
+        "humidities": humidities,
+        "cur_temperature": temperatures[-1],
+        "cur_humidity": humidities[-1],
     })
 
 
@@ -49,8 +49,7 @@ async def index(request: Request):
 
 
 def is_host_up(ip):
-    param = '-n' if platform.system().lower()=='windows' else '-c'
-    command = ['ping', param, '1', ip]
+    command = ['timeout', '0.05', 'ping', '-c', '1', ip]
     response = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     return response.returncode == 0
 

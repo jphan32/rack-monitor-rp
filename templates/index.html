@@ -20,12 +20,18 @@
 
 <div class="container">
     <h2 class="text-center mt-4">Temperature and Humidity Chart</h1>
+    <div class="d-flex justify-content-end">
+        <div class="text-right">
+            <p class="h5">🌡️ <span id="current">Loading...</span></p>
+        </div>
+    </div>
     <canvas id="myChart" width="400" height="150"></canvas>
     <script>
         // 데이터 가져오기
         fetch("/get_data/")
             .then(response => response.json())
             .then(data => {
+                document.getElementById('current').textContent = data.cur_temperature + '°C  ' +  data.cur_humidity + '%';
                 // 데이터를 차트에 그리기
                 var ctx = document.getElementById('myChart').getContext('2d');
                 var myChart = new Chart(ctx, {
