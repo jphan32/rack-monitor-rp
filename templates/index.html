@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="refresh" content="60">
+    <!--meta http-equiv="refresh" content="60"-->
 
     <title>Rack Manager</title>
     <link rel="icon" type="image/png" href="/favicon.png">
@@ -27,52 +27,81 @@
     </div>
     <canvas id="myChart" width="400" height="150"></canvas>
     <script>
-        // 데이터 가져오기
+        var myChart;
+
+        // 차트를 생성하는 함수
+        function createChart(data) {
+            var ctx = document.getElementById('myChart').getContext('2d');
+            myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.timestamps,
+                    datasets: [{
+                        label: 'Temperature',
+                        data: data.temperatures,
+                        borderColor: 'blue',
+                        fill: false
+                    },
+                    {
+                        label: 'Humidity',
+                        data: data.humidities,
+                        borderColor: 'green',
+                        fill: false
+                    }]
+                },
+                options: {
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                parser: 'YYYY-MM-DD HH:mm:ss',
+                                unit: 'minute',
+                                stepSize: 5,
+                                displayFormats: {
+                                    minute: 'HH:mm'
+                                },
+                                tooltipFormat: 'll HH:mm'
+                            },
+                            ticks: {
+                                autoSkip: true,
+                                maxTicksLimit: 20
+                            }
+                        }
+                    },
+                    animation: {
+                        duration: 1000 // 애니메이션 시간 설정
+                    }
+                }
+            });
+        }
+
+        // 데이터를 업데이트하는 함수
+        function updateChartData(data) {
+            if (myChart) {
+                myChart.data.labels = data.timestamps;
+                myChart.data.datasets[0].data = data.temperatures;
+                myChart.data.datasets[1].data = data.humidities;
+                myChart.options.animation = false; // 애니메이션 비활성화
+                myChart.update();
+            }
+            document.getElementById('current').textContent = data.cur_temperature + '°C  |  ' +  data.cur_humidity + '%';
+        }
+
+        // 초기 데이터 로드 및 차트 생성
         fetch("/get_data/")
             .then(response => response.json())
             .then(data => {
-                document.getElementById('current').textContent = data.cur_temperature + '°C  ' +  data.cur_humidity + '%';
-                // 데이터를 차트에 그리기
-                var ctx = document.getElementById('myChart').getContext('2d');
-                var myChart = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: data.timestamps,
-                        datasets: [{
-                            label: 'Temperature',
-                            data: data.temperatures,
-                            borderColor: 'blue',
-                            fill: false
-                        },
-                        {
-                            label: 'Humidity',
-                            data: data.humidities,
-                            borderColor: 'green',
-                            fill: false
-                        }]
-                    },
-                    options: {
-                        scales: {
-                            x: {
-                                type: 'time',
-                                time: {
-                                    parser: 'YYYY-MM-DD HH:mm:ss',
-                                    unit: 'minute',
-                                    stepSize: 5,
-                                    displayFormats: {
-                                        minute: 'HH:mm'
-                                    },
-                                    tooltipFormat: 'll HH:mm'
-                                },
-                                ticks: {
-                                    autoSkip: true,
-                                    maxTicksLimit: 20
-                                }
-                            }
-                        }
-                    }
-                });
+                document.getElementById('current').textContent = data.cur_temperature + '°C  |  ' +  data.cur_humidity + '%';
+                createChart(data);
             });
+
+        // 정기적으로 데이터 업데이트
+        setInterval(function() {
+            fetch("/get_data/")
+                .then(response => response.json())
+                .then(updateChartData)
+                .catch(error => console.error('Error:', error));
+        }, 30 * 1000); // 30초마다 데이터 업데이트
     </script>
 </div>
 
@@ -80,7 +109,7 @@
     <h2 class="text-center mt-4">PC Status Dashboard</h1>
     <div class="row">
         {% for pc in pclist %}
-        <div class="col-md-6 mt-5" id="{{ pc.id }}">
+        <div class="col-md-6 mt-5" id="pc-{{ pc.id }}">
             <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">{{ pc.name }}</h5>
@@ -108,6 +137,25 @@
                     btnElement.disabled = false;
                 });
         }
+
+        // 5초마다 PC 상태 업데이트
+        setInterval(function() {
+            fetch('/get_pc_status/', { method: 'GET' }) // PC 상태를 가져오는 서버의 URL
+
+                .then(response => response.json())
+                .then(data => {
+                    data.pclist.forEach(pc => {
+                        var statusElement = document.querySelector(`#pc-${pc.id} .status span`);
+                        var powerButton = document.getElementById(`power-btn-${pc.id}`);
+                        statusElement.textContent = pc.status ? 'On' : 'Off';
+                        statusElement.className = pc.status ? 'text-success' : 'text-danger';
+                        powerButton.disabled = pc.status || !pc.can_wol;
+                    });
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                });
+        }, 1 * 1000);
     </script>
 </div>
 

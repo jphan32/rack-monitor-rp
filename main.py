@@ -39,13 +39,23 @@ async def power_on(pcId: int):
     return {"message": f"Power on request received for PC ID: {pcId}"}
 
 
+@app.get("/get_pc_status/")
+async def get_pc_status():
+    update_pc_status()
+    return JSONResponse({"pclist":pclist})
+
+
 @app.get("/")
 async def index(request: Request):
+    update_pc_status()
+    return templates.TemplateResponse("index.html", {"request": request, "pclist": pclist})
+
+
+def update_pc_status():
+    global pclist
     for idx, pc in enumerate(pclist):
         pclist[idx]['id'] = idx
         pclist[idx]['status'] = is_host_up(pc['ip'])
-
-    return templates.TemplateResponse("index.html", {"request": request, "pclist": pclist})
 
 
 def is_host_up(ip):
